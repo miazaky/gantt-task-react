@@ -2453,7 +2453,7 @@ var Gantt = function Gantt(_ref) {
     ganttFullHeight: ganttFullHeight
   });
 
-  var _useState9 = React.useState(ganttHeight || rowCount * rowHeight),
+  var _useState9 = React.useState(ganttHeight || rowHeight),
       svgContainerHeight = _useState9[0],
       setSvgContainerHeight = _useState9[1];
 
@@ -2597,25 +2597,15 @@ var Gantt = function Gantt(_ref) {
       if (event.shiftKey || event.deltaX) {
         var scrollMove = event.deltaX ? event.deltaX : event.deltaY;
         var newScrollX = scrollX + scrollMove;
-
-        if (newScrollX < 0) {
-          newScrollX = 0;
-        } else if (newScrollX > svgWidth) {
-          newScrollX = svgWidth;
-        }
-
+        newScrollX = Math.max(0, Math.min(newScrollX, svgWidth));
         setScrollX(newScrollX);
         event.preventDefault();
       } else {
         var fullHeight = ganttFullHeight;
         var visibleHeight = ganttHeight || svgContainerHeight - headerHeight;
+        var maxScrollY = Math.max(0, fullHeight - visibleHeight);
         var newScrollY = scrollY + event.deltaY;
-
-        if (newScrollY < 0) {
-          newScrollY = 0;
-        } else if (fullHeight > visibleHeight && newScrollY > fullHeight - visibleHeight) {
-          newScrollY = fullHeight - visibleHeight;
-        }
+        newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
 
         if (newScrollY !== scrollY) {
           setScrollY(newScrollY);
@@ -2627,7 +2617,7 @@ var Gantt = function Gantt(_ref) {
     };
 
     (_wrapperRef$current = wrapperRef.current) === null || _wrapperRef$current === void 0 ? void 0 : _wrapperRef$current.addEventListener("wheel", handleWheel, {
-      passive: true
+      passive: false
     });
     return function () {
       var _wrapperRef$current2;
@@ -2637,8 +2627,14 @@ var Gantt = function Gantt(_ref) {
   }, [wrapperRef, scrollY, scrollX, ganttHeight, svgWidth, rtl, ganttFullHeight, svgContainerHeight, rowCountOverride]);
 
   var handleScrollY = function handleScrollY(event) {
-    if (scrollY !== event.currentTarget.scrollTop && !ignoreScrollEvent) {
-      setScrollY(event.currentTarget.scrollTop);
+    var fullHeight = ganttFullHeight;
+    var visibleHeight = ganttHeight || svgContainerHeight - headerHeight;
+    var maxScrollY = Math.max(0, fullHeight - visibleHeight);
+    var newScrollY = event.currentTarget.scrollTop;
+    newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
+
+    if (scrollY !== newScrollY && !ignoreScrollEvent) {
+      setScrollY(newScrollY);
       setIgnoreScrollEvent(true);
     } else {
       setIgnoreScrollEvent(false);
@@ -2695,11 +2691,12 @@ var Gantt = function Gantt(_ref) {
     } else {
       var fullHeight = ganttFullHeight;
       var visibleHeight = ganttHeight || svgContainerHeight - headerHeight;
+      var maxScrollY = Math.max(0, fullHeight - visibleHeight);
 
       if (newScrollY < 0) {
         newScrollY = 0;
-      } else if (fullHeight > visibleHeight && newScrollY > fullHeight - visibleHeight) {
-        newScrollY = fullHeight - visibleHeight;
+      } else if (newScrollY > maxScrollY) {
+        newScrollY = maxScrollY;
       }
 
       setScrollY(newScrollY);

@@ -119,7 +119,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     ganttFullHeight,
   });
   const [svgContainerHeight, setSvgContainerHeight] = useState(
-    ganttHeight || (rowCount* rowHeight)
+    ganttHeight || rowHeight
   );
 
 
@@ -312,37 +312,29 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       if (event.shiftKey || event.deltaX) {
         const scrollMove = event.deltaX ? event.deltaX : event.deltaY;
         let newScrollX = scrollX + scrollMove;
-        if (newScrollX < 0) {
-          newScrollX = 0;
-        } else if (newScrollX > svgWidth) {
-          newScrollX = svgWidth;
-        }
+        newScrollX = Math.max(0, Math.min(newScrollX, svgWidth));
         setScrollX(newScrollX);
         event.preventDefault();
       } else {
-          const fullHeight = ganttFullHeight;
-          const visibleHeight = ganttHeight || (svgContainerHeight - headerHeight);
+        const fullHeight = ganttFullHeight;
+        const visibleHeight = ganttHeight || (svgContainerHeight - headerHeight);
+        const maxScrollY = Math.max(0, fullHeight - visibleHeight);
 
-          let newScrollY = scrollY + event.deltaY;
+        let newScrollY = scrollY + event.deltaY;
+        newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
 
-          if (newScrollY < 0) {
-            newScrollY = 0;
-          } else if (fullHeight > visibleHeight && newScrollY > fullHeight - visibleHeight) {
-            newScrollY = fullHeight - visibleHeight;
-          }
-
-          if (newScrollY !== scrollY) {
-            setScrollY(newScrollY);
-            event.preventDefault();
-          }
+        if (newScrollY !== scrollY) {
+          setScrollY(newScrollY);
+          event.preventDefault();
         }
+      }
 
       setIgnoreScrollEvent(true);
     };
 
     // subscribe if scroll is necessary
     wrapperRef.current?.addEventListener("wheel", handleWheel, {
-      passive: true,
+      passive: false,
     });
     return () => {
       wrapperRef.current?.removeEventListener("wheel", handleWheel);
@@ -360,8 +352,15 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   ]);
 
   const handleScrollY = (event: SyntheticEvent<HTMLDivElement>) => {
-    if (scrollY !== event.currentTarget.scrollTop && !ignoreScrollEvent) {
-      setScrollY(event.currentTarget.scrollTop);
+    const fullHeight = ganttFullHeight;
+    const visibleHeight = ganttHeight || (svgContainerHeight - headerHeight);
+    const maxScrollY = Math.max(0, fullHeight - visibleHeight);
+
+    let newScrollY = event.currentTarget.scrollTop;
+    newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
+
+    if (scrollY !== newScrollY && !ignoreScrollEvent) {
+      setScrollY(newScrollY);
       setIgnoreScrollEvent(true);
     } else {
       setIgnoreScrollEvent(false);
@@ -415,11 +414,12 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     } else {
         const fullHeight = ganttFullHeight;
         const visibleHeight = ganttHeight || (svgContainerHeight - headerHeight);
+        const maxScrollY = Math.max(0, fullHeight - visibleHeight);
 
         if (newScrollY < 0) {
           newScrollY = 0;
-        } else if (fullHeight > visibleHeight && newScrollY > fullHeight - visibleHeight) {
-          newScrollY = fullHeight - visibleHeight;
+        } else if (newScrollY > maxScrollY) {
+          newScrollY = maxScrollY;
         }
 
         setScrollY(newScrollY);
