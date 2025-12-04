@@ -22,10 +22,23 @@ export const convertToBarTasks = (
   milestoneBackgroundColor: string,
   milestoneBackgroundSelectedColor: string
 ) => {
+
+  const rowIndexByName = new Map<string, number>();
+  let rowCounter = 0;
+
+  for (const t of tasks) {
+    const nameKey = t.name ?? "";
+    if (!rowIndexByName.has(nameKey)) {
+      rowIndexByName.set(nameKey, rowCounter);
+      rowCounter++;
+    }
+  }
   let barTasks = tasks.map((t, i) => {
+    const rowIndex = rowIndexByName.get(t.name ?? "") ?? 0;
+
     return convertToBarTask(
       t,
-      i,
+      rowIndex,   // 👈 IMPORTANT: rowIndex instead of `i`
       dates,
       columnWidth,
       rowHeight,

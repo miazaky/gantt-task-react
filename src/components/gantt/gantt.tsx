@@ -78,7 +78,9 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 
   const [taskListWidth, setTaskListWidth] = useState(0);
   const [svgContainerWidth, setSvgContainerWidth] = useState(0);
-  const [svgContainerHeight, setSvgContainerHeight] = useState(ganttHeight);
+  const [svgContainerHeight, setSvgContainerHeight] = useState(
+    ganttHeight || (tasks.length * rowHeight)
+  );
   const [barTasks, setBarTasks] = useState<BarTask[]>([]);
   const [ganttEvent, setGanttEvent] = useState<GanttEvent>({
     action: "",
@@ -87,12 +89,24 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     () => (rowHeight * barFill) / 100,
     [rowHeight, barFill]
   );
+  const getRowCount = (tasks: { index: number }[]): number => {
+    if (!tasks.length) {
+      return 0;
+    }
+    let max = 0;
+    for (const t of tasks) {
+      if (t.index > max) {
+        max = t.index;
+      }
+    }
+    return max + 1;
+  };
 
   const [selectedTask, setSelectedTask] = useState<BarTask>();
   const [failedTask, setFailedTask] = useState<BarTask | null>(null);
 
   const svgWidth = dateSetup.dates.length * columnWidth;
-  const ganttFullHeight = barTasks.length * rowHeight;
+  const ganttFullHeight = getRowCount(barTasks) * rowHeight;
 
   const [scrollY, setScrollY] = useState(0);
   const [scrollX, setScrollX] = useState(-1);
@@ -120,28 +134,49 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       }
     }
     setDateSetup({ dates: newDates, viewMode });
-    setBarTasks(
-      convertToBarTasks(
-        filteredTasks,
-        newDates,
-        columnWidth,
-        rowHeight,
-        taskHeight,
-        barCornerRadius,
-        handleWidth,
-        rtl,
-        barProgressColor,
-        barProgressSelectedColor,
-        barBackgroundColor,
-        barBackgroundSelectedColor,
-        projectProgressColor,
-        projectProgressSelectedColor,
-        projectBackgroundColor,
-        projectBackgroundSelectedColor,
-        milestoneBackgroundColor,
-        milestoneBackgroundSelectedColor
-      )
+    const rawBars = convertToBarTasks(
+      filteredTasks,
+      newDates,
+      columnWidth,
+      rowHeight,
+      taskHeight,
+      barCornerRadius,
+      handleWidth,
+      rtl,
+      barProgressColor,
+      barProgressSelectedColor,
+      barBackgroundColor,
+      barBackgroundSelectedColor,
+      projectProgressColor,
+      projectProgressSelectedColor,
+      projectBackgroundColor,
+      projectBackgroundSelectedColor,
+      milestoneBackgroundColor,
+      milestoneBackgroundSelectedColor
     );
+
+    const rowMap = new Map<string, number>();
+    let nextRow = 0;
+
+    const groupedBars: BarTask[] = rawBars.map((bar) => {
+      const name = bar.name ?? "";
+
+      let rowIndex = rowMap.get(name);
+      if (rowIndex === undefined) {
+        rowIndex = nextRow++;
+        rowMap.set(name, rowIndex);
+      }
+
+      const newY = rowIndex * rowHeight + (rowHeight - taskHeight) / 2;
+
+      return {
+        ...bar,
+        index: rowIndex,
+        y: newY,
+      };
+    });
+
+    setBarTasks(groupedBars);
   }, [
     tasks,
     viewMode,
@@ -250,9 +285,11 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     if (ganttHeight) {
       setSvgContainerHeight(ganttHeight + headerHeight);
     } else {
-      setSvgContainerHeight(tasks.length * rowHeight + headerHeight);
+      const rowCount = getRowCount(barTasks);
+      setSvgContainerHeight(rowCount * rowHeight + headerHeight);
     }
-  }, [ganttHeight, tasks, headerHeight, rowHeight]);
+  }, [ganttHeight, barTasks, headerHeight, rowHeight]);
+
 
   // scroll events
   useEffect(() => {
@@ -267,18 +304,23 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         }
         setScrollX(newScrollX);
         event.preventDefault();
-      } else if (ganttHeight) {
-        let newScrollY = scrollY + event.deltaY;
-        if (newScrollY < 0) {
-          newScrollY = 0;
-        } else if (newScrollY > ganttFullHeight - ganttHeight) {
-          newScrollY = ganttFullHeight - ganttHeight;
+      } else {
+          const rowCount = getRowCount(barTasks);
+          const fullHeight = rowCount * rowHeight;
+
+          let newScrollY = scrollY + event.deltaY;
+
+          if (newScrollY < 0) {
+            newScrollY = 0;
+          } else if (ganttHeight && newScrollY > fullHeight - ganttHeight) {
+            newScrollY = fullHeight - ganttHeight;
+          }
+
+          if (newScrollY !== scrollY) {
+            setScrollY(newScrollY);
+            event.preventDefault();
+          }
         }
-        if (newScrollY !== scrollY) {
-          setScrollY(newScrollY);
-          event.preventDefault();
-        }
-      }
 
       setIgnoreScrollEvent(true);
     };
@@ -354,13 +396,17 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       }
       setScrollX(newScrollX);
     } else {
-      if (newScrollY < 0) {
-        newScrollY = 0;
-      } else if (newScrollY > ganttFullHeight - ganttHeight) {
-        newScrollY = ganttFullHeight - ganttHeight;
+        const rowCount = getRowCount(barTasks);
+        const fullHeight = rowCount * rowHeight;
+
+        if (newScrollY < 0) {
+          newScrollY = 0;
+        } else if (ganttHeight && newScrollY > fullHeight - ganttHeight) {
+          newScrollY = fullHeight - ganttHeight;
+        }
+
+        setScrollY(newScrollY);
       }
-      setScrollY(newScrollY);
-    }
     setIgnoreScrollEvent(true);
   };
 
@@ -485,7 +531,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
           />
         )}
         <VerticalScroll
-          ganttFullHeight={ganttFullHeight}
+          ganttFullHeight={getRowCount(barTasks) * rowHeight}
           ganttHeight={ganttHeight}
           headerHeight={headerHeight}
           scroll={scrollY}

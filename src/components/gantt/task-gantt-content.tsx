@@ -280,22 +280,31 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
         })}
       </g>
       <g className="bar" fontFamily={fontFamily} fontSize={fontSize}>
-        {tasks.map(task => {
-          return (
-            <TaskItem
-              task={task}
-              arrowIndent={arrowIndent}
-              taskHeight={taskHeight}
-              isProgressChangeable={!!onProgressChange && !task.isDisabled}
-              isDateChangeable={!!onDateChange && !task.isDisabled}
-              isDelete={!task.isDisabled}
-              onEventStart={handleBarEventStart}
-              key={task.id}
-              isSelected={!!selectedTask && task.id === selectedTask.id}
-              rtl={rtl}
-            />
-          );
-        })}
+        {Object.entries(
+          tasks.reduce((acc, task) => {
+            const key = task.name ?? "";
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(task);
+            return acc;
+          }, {} as Record<string, BarTask[]>)
+        ).map(([groupName, groupTasks]) => (
+          <g key={groupName}>
+            {groupTasks.map((task) => (
+              <TaskItem
+                task={task}
+                arrowIndent={arrowIndent}
+                taskHeight={taskHeight}
+                isProgressChangeable={!!onProgressChange && !task.isDisabled}
+                isDateChangeable={!!onDateChange && !task.isDisabled}
+                isDelete={!task.isDisabled}
+                onEventStart={handleBarEventStart}
+                key={task.id}
+                isSelected={!!selectedTask && task.id === selectedTask.id}
+                rtl={rtl}
+              />
+            ))}
+          </g>
+        ))}
       </g>
     </g>
   );
