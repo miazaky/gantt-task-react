@@ -2586,9 +2586,10 @@ var Gantt = function Gantt(_ref) {
     if (ganttHeight) {
       setSvgContainerHeight(ganttHeight + headerHeight);
     } else {
-      var _rowCount = getRowCount(barTasks);
-
-      var realRowCount = rowCountOverride != null ? rowCountOverride : _rowCount;
+      var uniqueRowCount = new Set(barTasks.map(function (b) {
+        return b.index;
+      })).size;
+      var realRowCount = rowCountOverride != null ? rowCountOverride : uniqueRowCount;
       setSvgContainerHeight(realRowCount * rowHeight + headerHeight);
     }
   }, [ganttHeight, barTasks, headerHeight, rowHeight, rowCountOverride]);

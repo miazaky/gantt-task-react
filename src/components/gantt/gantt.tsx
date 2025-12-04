@@ -290,8 +290,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     if (ganttHeight) {
       setSvgContainerHeight(ganttHeight + headerHeight);
     } else {
-      const rowCount = getRowCount(barTasks);
-      const realRowCount = rowCountOverride ?? rowCount;
+      const uniqueRowCount = new Set(barTasks.map(b => b.index)).size;
+      const realRowCount = rowCountOverride ?? uniqueRowCount;
       setSvgContainerHeight(realRowCount * rowHeight + headerHeight);
     }
   }, [ganttHeight, barTasks, headerHeight, rowHeight, rowCountOverride]);
