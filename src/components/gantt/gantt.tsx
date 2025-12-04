@@ -90,25 +90,26 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     () => (rowHeight * barFill) / 100,
     [rowHeight, barFill]
   );
-  const getRowCount = (tasks: { index: number }[]): number => {
-    if (!tasks.length) {
-      return 0;
-    }
-    let max = 0;
-    for (const t of tasks) {
-      if (t.index > max) {
-        max = t.index;
-      }
-    }
-    return max + 1;
-  };
+  // const getRowCount = (tasks: { index: number }[]): number => {
+  //   if (!tasks.length) {
+  //     return 0;
+  //   }
+  //   let max = 0;
+  //   for (const t of tasks) {
+  //     if (t.index > max) {
+  //       max = t.index;
+  //     }
+  //   }
+  //   return max + 1;
+  // };
 
   const [selectedTask, setSelectedTask] = useState<BarTask>();
   const [failedTask, setFailedTask] = useState<BarTask | null>(null);
 
   const svgWidth = dateSetup.dates.length * columnWidth;
 
-  const rowCount = rowCountOverride ?? getRowCount(barTasks);
+  const uniqueRowCount = new Set(barTasks.map(b => b.index)).size;
+  const rowCount = rowCountOverride ?? uniqueRowCount;
   const ganttFullHeight = rowCount * rowHeight;
 
 
@@ -290,11 +291,9 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     if (ganttHeight) {
       setSvgContainerHeight(ganttHeight + headerHeight);
     } else {
-      const uniqueRowCount = new Set(barTasks.map(b => b.index)).size;
-      const realRowCount = rowCountOverride ?? uniqueRowCount;
-      setSvgContainerHeight(realRowCount * rowHeight + headerHeight);
+      setSvgContainerHeight(rowCount * rowHeight + headerHeight);
     }
-  }, [ganttHeight, barTasks, headerHeight, rowHeight, rowCountOverride]);
+  }, [ganttHeight, headerHeight, rowHeight, rowCount]);
 
 
   // scroll events

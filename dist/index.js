@@ -2426,24 +2426,6 @@ var Gantt = function Gantt(_ref) {
     return rowHeight * barFill / 100;
   }, [rowHeight, barFill]);
 
-  var getRowCount = function getRowCount(tasks) {
-    if (!tasks.length) {
-      return 0;
-    }
-
-    var max = 0;
-
-    for (var _iterator = _createForOfIteratorHelperLoose(tasks), _step; !(_step = _iterator()).done;) {
-      var t = _step.value;
-
-      if (t.index > max) {
-        max = t.index;
-      }
-    }
-
-    return max + 1;
-  };
-
   var _useState8 = React.useState(),
       selectedTask = _useState8[0],
       setSelectedTask = _useState8[1];
@@ -2453,7 +2435,10 @@ var Gantt = function Gantt(_ref) {
       setFailedTask = _useState9[1];
 
   var svgWidth = dateSetup.dates.length * columnWidth;
-  var rowCount = rowCountOverride != null ? rowCountOverride : getRowCount(barTasks);
+  var uniqueRowCount = new Set(barTasks.map(function (b) {
+    return b.index;
+  })).size;
+  var rowCount = rowCountOverride != null ? rowCountOverride : uniqueRowCount;
   var ganttFullHeight = rowCount * rowHeight;
 
   var _useState10 = React.useState(0),
@@ -2586,13 +2571,9 @@ var Gantt = function Gantt(_ref) {
     if (ganttHeight) {
       setSvgContainerHeight(ganttHeight + headerHeight);
     } else {
-      var uniqueRowCount = new Set(barTasks.map(function (b) {
-        return b.index;
-      })).size;
-      var realRowCount = rowCountOverride != null ? rowCountOverride : uniqueRowCount;
-      setSvgContainerHeight(realRowCount * rowHeight + headerHeight);
+      setSvgContainerHeight(rowCount * rowHeight + headerHeight);
     }
-  }, [ganttHeight, barTasks, headerHeight, rowHeight, rowCountOverride]);
+  }, [ganttHeight, headerHeight, rowHeight, rowCount]);
   React.useEffect(function () {
     var _wrapperRef$current;
 
