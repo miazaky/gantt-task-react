@@ -556,3 +556,15 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     </div>
   );
 };
+
+export function debugNormalizedNames(barTasks: { name: string }[]) {
+  const normalized = barTasks.map(t => t.name.trim().toLowerCase());
+  const unique = Array.from(new Set(normalized));
+
+  console.log("RAW names:", barTasks.map(t => t.name));
+  console.log("Normalized:", normalized);
+  console.log("Unique normalized:", unique);
+  console.log("Count:", unique.length);
+
+  return unique;
+}
