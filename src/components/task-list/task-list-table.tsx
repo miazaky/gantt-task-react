@@ -14,6 +14,7 @@ const toLocaleDateStringFactory =
     }
     return lds;
   };
+
 const dateTimeOptions: Intl.DateTimeFormatOptions = {
   weekday: "short",
   year: "numeric",
@@ -45,6 +46,13 @@ export const TaskListTableDefault: React.FC<{
     [locale]
   );
 
+  const groups = tasks.reduce((acc, t) => {
+    const key = t.name ?? "";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(t);
+    return acc;
+  }, {} as Record<string, Task[]>);
+
   return (
     <div
       className={styles.taskListWrapper}
@@ -53,42 +61,9 @@ export const TaskListTableDefault: React.FC<{
         fontSize: fontSize,
       }}
     >
-    {(() => {
-  // 1️⃣ Group tasks by employee name
-      const groups = tasks.reduce((acc, t) => {
-        const key = t.name ?? "";
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(t);
-        return acc;
-      }, {} as Record<string, Task[]>);
-
-      return Object.entries(groups).map(([name, employeeTasks]) => {
-        // 2️⃣ Sort tasks by start
-        const sorted = [...employeeTasks].sort(
-          (a, b) => a.start.getTime() - b.start.getTime()
-        );
-
-        // 3️⃣ Merge overlapping tasks → blocks
-        const blocks: { start: Date; end: Date }[] = [];
-        let currentStart = sorted[0].start;
-        let currentEnd = sorted[0].end;
-
-        for (let i = 1; i < sorted.length; i++) {
-          const t = sorted[i];
-          if (t.start <= currentEnd) {
-            // they overlap → extend current block
-            currentEnd = new Date(Math.max(currentEnd.getTime(), t.end.getTime()));
-          } else {
-            // no overlap → push block and start new one
-            blocks.push({ start: currentStart, end: currentEnd });
-            currentStart = t.start;
-            currentEnd = t.end;
-          }
-        }
-        blocks.push({ start: currentStart, end: currentEnd });
-
-        // 4️⃣ Expander based on first task
+      {Object.entries(groups).map(([name, employeeTasks]) => {
         const main = employeeTasks[0];
+
         let expanderSymbol = "";
         if (main.hideChildren === false) expanderSymbol = "▼";
         else if (main.hideChildren === true) expanderSymbol = "▶";
@@ -99,13 +74,9 @@ export const TaskListTableDefault: React.FC<{
             className={styles.taskListTableRow}
             style={{ height: rowHeight }}
           >
-            {/* NAME CELL */}
             <div
               className={styles.taskListCell}
-              style={{
-                minWidth: rowWidth,
-                maxWidth: rowWidth,
-              }}
+              style={{ minWidth: rowWidth, maxWidth: rowWidth }}
               title={name}
             >
               <div className={styles.taskListNameWrapper}>
@@ -123,27 +94,34 @@ export const TaskListTableDefault: React.FC<{
               </div>
             </div>
 
-            {/* 5️⃣ DATE BLOCKS — one row, multiple blocks horizontally */}
-            {blocks.map((block, idx) => (
-              <div
-                key={idx}
-                className={styles.taskListCell}
-                style={{
-                  minWidth: rowWidth,
-                  maxWidth: rowWidth,
-                }}
-              >
-                {toLocaleDateString(block.start, dateTimeOptions)}
-                {" — "}
-                {toLocaleDateString(block.end, dateTimeOptions)}
-              </div>
-            ))}
+            <div
+              className={styles.taskListCell}
+              style={{ minWidth: rowWidth, maxWidth: rowWidth }}
+            >
+              &nbsp;
+              {toLocaleDateString(
+                new Date(
+                  Math.min(...employeeTasks.map(t => t.start.getTime()))
+                ),
+                dateTimeOptions
+              )}
+            </div>
+
+            <div
+              className={styles.taskListCell}
+              style={{ minWidth: rowWidth, maxWidth: rowWidth }}
+            >
+              &nbsp;
+              {toLocaleDateString(
+                new Date(
+                  Math.max(...employeeTasks.map(t => t.end.getTime()))
+                ),
+                dateTimeOptions
+              )}
+            </div>
           </div>
         );
-      });
-    })()}
-
-
+      })}
     </div>
   );
 };
