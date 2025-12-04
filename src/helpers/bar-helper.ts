@@ -33,7 +33,7 @@ export const convertToBarTasks = (
       rowCounter++;
     }
   }
-  let barTasks = tasks.map((t, i) => {
+  let barTasks = tasks.map((t) => {
     const rowIndex = rowIndexByName.get(t.name ?? "") ?? 0;
 
     return convertToBarTask(
