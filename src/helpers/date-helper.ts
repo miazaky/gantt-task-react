@@ -220,11 +220,11 @@ export const getLocalDayOfWeek = (
  * Returns monday of current week
  * @param date date for modify
  */
-const getMonday = (date: Date) => {
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-  return new Date(date.setDate(diff));
-};
+// const getMonday = (date: Date) => {
+//   const day = date.getDay();
+//   const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+//   return new Date(date.setDate(diff));
+// };
 
 export const getWeekNumberISO8601 = (date: Date) => {
   const tmpDate = new Date(date.valueOf());

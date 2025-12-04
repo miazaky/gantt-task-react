@@ -101,7 +101,7 @@ var startOfDate = function startOfDate(date, scale) {
   var newDate = new Date(date.getFullYear(), shouldReset("year") ? 0 : date.getMonth(), shouldReset("month") ? 1 : date.getDate(), shouldReset("day") ? 0 : date.getHours(), shouldReset("hour") ? 0 : date.getMinutes(), shouldReset("minute") ? 0 : date.getSeconds(), shouldReset("second") ? 0 : date.getMilliseconds());
   return newDate;
 };
-var ganttDateRange = function ganttDateRange(tasks, viewMode, preStepsCount) {
+var ganttDateRange = function ganttDateRange(tasks, viewMode) {
   var newStartDate = tasks[0].start;
   var newEndDate = tasks[0].start;
 
@@ -119,59 +119,43 @@ var ganttDateRange = function ganttDateRange(tasks, viewMode, preStepsCount) {
 
   switch (viewMode) {
     case exports.ViewMode.Year:
-      newStartDate = addToDate(newStartDate, -1, "year");
       newStartDate = startOfDate(newStartDate, "year");
-      newEndDate = addToDate(newEndDate, 1, "year");
       newEndDate = startOfDate(newEndDate, "year");
       break;
 
     case exports.ViewMode.QuarterYear:
-      newStartDate = addToDate(newStartDate, -3, "month");
       newStartDate = startOfDate(newStartDate, "month");
-      newEndDate = addToDate(newEndDate, 3, "year");
       newEndDate = startOfDate(newEndDate, "year");
       break;
 
     case exports.ViewMode.Month:
-      newStartDate = addToDate(newStartDate, -1 * preStepsCount, "month");
       newStartDate = startOfDate(newStartDate, "month");
-      newEndDate = addToDate(newEndDate, 1, "year");
       newEndDate = startOfDate(newEndDate, "year");
       break;
 
     case exports.ViewMode.Week:
       newStartDate = startOfDate(newStartDate, "day");
-      newStartDate = addToDate(getMonday(newStartDate), -7 * preStepsCount, "day");
       newEndDate = startOfDate(newEndDate, "day");
-      newEndDate = addToDate(newEndDate, 1.5, "month");
       break;
 
     case exports.ViewMode.Day:
       newStartDate = startOfDate(newStartDate, "day");
-      newStartDate = addToDate(newStartDate, -1 * preStepsCount, "day");
       newEndDate = startOfDate(newEndDate, "day");
-      newEndDate = addToDate(newEndDate, 19, "day");
       break;
 
     case exports.ViewMode.QuarterDay:
       newStartDate = startOfDate(newStartDate, "day");
-      newStartDate = addToDate(newStartDate, -1 * preStepsCount, "day");
       newEndDate = startOfDate(newEndDate, "day");
-      newEndDate = addToDate(newEndDate, 66, "hour");
       break;
 
     case exports.ViewMode.HalfDay:
       newStartDate = startOfDate(newStartDate, "day");
-      newStartDate = addToDate(newStartDate, -1 * preStepsCount, "day");
       newEndDate = startOfDate(newEndDate, "day");
-      newEndDate = addToDate(newEndDate, 108, "hour");
       break;
 
     case exports.ViewMode.Hour:
       newStartDate = startOfDate(newStartDate, "hour");
-      newStartDate = addToDate(newStartDate, -1 * preStepsCount, "hour");
       newEndDate = startOfDate(newEndDate, "day");
-      newEndDate = addToDate(newEndDate, 1, "day");
       break;
   }
 
@@ -235,13 +219,6 @@ var getLocalDayOfWeek = function getLocalDayOfWeek(date, locale, format) {
   bottomValue = bottomValue.replace(bottomValue[0], bottomValue[0].toLocaleUpperCase());
   return bottomValue;
 };
-
-var getMonday = function getMonday(date) {
-  var day = date.getDay();
-  var diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  return new Date(date.setDate(diff));
-};
-
 var getWeekNumberISO8601 = function getWeekNumberISO8601(date) {
   var tmpDate = new Date(date.valueOf());
   var dayNumber = (tmpDate.getDay() + 6) % 7;
@@ -348,85 +325,64 @@ var TaskListTableDefault = function TaskListTableDefault(_ref) {
   var toLocaleDateString = React.useMemo(function () {
     return toLocaleDateStringFactory(locale);
   }, [locale]);
+  var groups = tasks.reduce(function (acc, t) {
+    var _t$name;
+
+    var key = (_t$name = t.name) != null ? _t$name : "";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(t);
+    return acc;
+  }, {});
   return React__default.createElement("div", {
     className: styles$1.taskListWrapper,
     style: {
       fontFamily: fontFamily,
       fontSize: fontSize
     }
-  }, function () {
-    var groups = tasks.reduce(function (acc, t) {
-      var _t$name;
-
-      var key = (_t$name = t.name) != null ? _t$name : "";
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(t);
-      return acc;
-    }, {});
-    return Object.entries(groups).map(function (_ref2) {
-      var name = _ref2[0],
-          employeeTasks = _ref2[1];
-      var sorted = [].concat(employeeTasks).sort(function (a, b) {
-        return a.start.getTime() - b.start.getTime();
-      });
-      var blocks = [];
-      var currentStart = sorted[0].start;
-      var currentEnd = sorted[0].end;
-
-      for (var i = 1; i < sorted.length; i++) {
-        var t = sorted[i];
-
-        if (t.start <= currentEnd) {
-          currentEnd = new Date(Math.max(currentEnd.getTime(), t.end.getTime()));
-        } else {
-          blocks.push({
-            start: currentStart,
-            end: currentEnd
-          });
-          currentStart = t.start;
-          currentEnd = t.end;
-        }
+  }, Object.entries(groups).map(function (_ref2) {
+    var name = _ref2[0],
+        employeeTasks = _ref2[1];
+    var main = employeeTasks[0];
+    var expanderSymbol = "";
+    if (main.hideChildren === false) expanderSymbol = "▼";else if (main.hideChildren === true) expanderSymbol = "▶";
+    return React__default.createElement("div", {
+      key: name,
+      className: styles$1.taskListTableRow,
+      style: {
+        height: rowHeight
       }
-
-      blocks.push({
-        start: currentStart,
-        end: currentEnd
-      });
-      var main = employeeTasks[0];
-      var expanderSymbol = "";
-      if (main.hideChildren === false) expanderSymbol = "▼";else if (main.hideChildren === true) expanderSymbol = "▶";
-      return React__default.createElement("div", {
-        key: name,
-        className: styles$1.taskListTableRow,
-        style: {
-          height: rowHeight
-        }
-      }, React__default.createElement("div", {
-        className: styles$1.taskListCell,
-        style: {
-          minWidth: rowWidth,
-          maxWidth: rowWidth
-        },
-        title: name
-      }, React__default.createElement("div", {
-        className: styles$1.taskListNameWrapper
-      }, React__default.createElement("div", {
-        className: expanderSymbol ? styles$1.taskListExpander : styles$1.taskListEmptyExpander,
-        onClick: function onClick() {
-          return onExpanderClick(main);
-        }
-      }, expanderSymbol), React__default.createElement("div", null, name))), blocks.map(function (block, idx) {
-        return React__default.createElement("div", {
-          key: idx,
-          className: styles$1.taskListCell,
-          style: {
-            minWidth: rowWidth,
-            maxWidth: rowWidth
-          }
-        }, toLocaleDateString(block.start, dateTimeOptions), " — ", toLocaleDateString(block.end, dateTimeOptions));
-      }));
-    });
-  }());
+    }, React__default.createElement("div", {
+      className: styles$1.taskListCell,
+      style: {
+        minWidth: rowWidth,
+        maxWidth: rowWidth
+      },
+      title: name
+    }, React__default.createElement("div", {
+      className: styles$1.taskListNameWrapper
+    }, React__default.createElement("div", {
+      className: expanderSymbol ? styles$1.taskListExpander : styles$1.taskListEmptyExpander,
+      onClick: function onClick() {
+        return onExpanderClick(main);
+      }
+    }, expanderSymbol), React__default.createElement("div", null, name))), React__default.createElement("div", {
+      className: styles$1.taskListCell,
+      style: {
+        minWidth: rowWidth,
+        maxWidth: rowWidth
+      }
+    }, "\xA0", toLocaleDateString(new Date(Math.min.apply(Math, employeeTasks.map(function (t) {
+      return t.start.getTime();
+    }))), dateTimeOptions)), React__default.createElement("div", {
+      className: styles$1.taskListCell,
+      style: {
+        minWidth: rowWidth,
+        maxWidth: rowWidth
+      }
+    }, "\xA0", toLocaleDateString(new Date(Math.max.apply(Math, employeeTasks.map(function (t) {
+      return t.end.getTime();
+    }))), dateTimeOptions)));
+  }));
 };
 
 var styles$2 = {"tooltipDefaultContainer":"_3T42e","tooltipDefaultContainerParagraph":"_29NTg","tooltipDetailsContainer":"_25P-K","tooltipDetailsContainerHidden":"_3gVAq"};
@@ -1188,26 +1144,20 @@ var drownPathAndTriangleRTL = function drownPathAndTriangleRTL(taskFrom, taskTo,
 };
 
 var convertToBarTasks = function convertToBarTasks(tasks, dates, columnWidth, rowHeight, taskHeight, barCornerRadius, handleWidth, rtl, barProgressColor, barProgressSelectedColor, barBackgroundColor, barBackgroundSelectedColor, projectProgressColor, projectProgressSelectedColor, projectBackgroundColor, projectBackgroundSelectedColor, milestoneBackgroundColor, milestoneBackgroundSelectedColor) {
-  var rowIndexByName = new Map();
-  var rowCounter = 0;
+  var grouped = Object.values(tasks.reduce(function (acc, t) {
+    var _t$name;
 
-  for (var _iterator = _createForOfIteratorHelperLoose(tasks), _step; !(_step = _iterator()).done;) {
-    var _t$name2;
-
-    var t = _step.value;
-    var nameKey = (_t$name2 = t.name) != null ? _t$name2 : "";
-
-    if (!rowIndexByName.has(nameKey)) {
-      rowIndexByName.set(nameKey, rowCounter);
-      rowCounter++;
-    }
-  }
-
-  var barTasks = tasks.map(function (t) {
-    var _rowIndexByName$get, _t$name;
-
-    var rowIndex = (_rowIndexByName$get = rowIndexByName.get((_t$name = t.name) != null ? _t$name : "")) != null ? _rowIndexByName$get : 0;
-    return convertToBarTask(t, rowIndex, dates, columnWidth, rowHeight, taskHeight, barCornerRadius, handleWidth, rtl, barProgressColor, barProgressSelectedColor, barBackgroundColor, barBackgroundSelectedColor, projectProgressColor, projectProgressSelectedColor, projectBackgroundColor, projectBackgroundSelectedColor, milestoneBackgroundColor, milestoneBackgroundSelectedColor);
+    var key = (_t$name = t.name) != null ? _t$name : "";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(t);
+    return acc;
+  }, {}));
+  var barTasks = [];
+  grouped.forEach(function (employeeTasks, rowIndex) {
+    employeeTasks.forEach(function (t) {
+      var bar = convertToBarTask(t, rowIndex, dates, columnWidth, rowHeight, taskHeight, barCornerRadius, handleWidth, rtl, barProgressColor, barProgressSelectedColor, barBackgroundColor, barBackgroundSelectedColor, projectProgressColor, projectProgressSelectedColor, projectBackgroundColor, projectBackgroundSelectedColor, milestoneBackgroundColor, milestoneBackgroundSelectedColor);
+      barTasks.push(bar);
+    });
   });
   barTasks = barTasks.map(function (task) {
     var dependencies = task.dependencies || [];
@@ -2348,8 +2298,6 @@ var Gantt = function Gantt(_ref) {
       ganttHeight = _ref$ganttHeight === void 0 ? 0 : _ref$ganttHeight,
       _ref$viewMode = _ref.viewMode,
       viewMode = _ref$viewMode === void 0 ? exports.ViewMode.Day : _ref$viewMode,
-      _ref$preStepsCount = _ref.preStepsCount,
-      preStepsCount = _ref$preStepsCount === void 0 ? 1 : _ref$preStepsCount,
       _ref$locale = _ref.locale,
       locale = _ref$locale === void 0 ? "en-GB" : _ref$locale,
       _ref$barFill = _ref.barFill,
@@ -2410,7 +2358,7 @@ var Gantt = function Gantt(_ref) {
   var taskListRef = React.useRef(null);
 
   var _useState = React.useState(function () {
-    var _ganttDateRange = ganttDateRange(tasks, viewMode, preStepsCount),
+    var _ganttDateRange = ganttDateRange(tasks, viewMode),
         startDate = _ganttDateRange[0],
         endDate = _ganttDateRange[1];
 
@@ -2504,7 +2452,7 @@ var Gantt = function Gantt(_ref) {
 
     filteredTasks = filteredTasks.sort(sortTasks);
 
-    var _ganttDateRange2 = ganttDateRange(filteredTasks, viewMode, preStepsCount),
+    var _ganttDateRange2 = ganttDateRange(filteredTasks, viewMode),
         startDate = _ganttDateRange2[0],
         endDate = _ganttDateRange2[1];
 
@@ -2543,7 +2491,7 @@ var Gantt = function Gantt(_ref) {
       });
     });
     setBarTasks(groupedBars);
-  }, [tasks, viewMode, preStepsCount, rowHeight, barCornerRadius, columnWidth, taskHeight, handleWidth, barProgressColor, barProgressSelectedColor, barBackgroundColor, barBackgroundSelectedColor, projectProgressColor, projectProgressSelectedColor, projectBackgroundColor, projectBackgroundSelectedColor, milestoneBackgroundColor, milestoneBackgroundSelectedColor, rtl, scrollX, onExpanderClick]);
+  }, [tasks, viewMode, rowHeight, barCornerRadius, columnWidth, taskHeight, handleWidth, barProgressColor, barProgressSelectedColor, barBackgroundColor, barBackgroundSelectedColor, projectProgressColor, projectProgressSelectedColor, projectBackgroundColor, projectBackgroundSelectedColor, milestoneBackgroundColor, milestoneBackgroundSelectedColor, rtl, scrollX, onExpanderClick]);
   React.useEffect(function () {
     if (viewMode === dateSetup.viewMode && (viewDate && !currentViewDate || viewDate && (currentViewDate === null || currentViewDate === void 0 ? void 0 : currentViewDate.valueOf()) !== viewDate.valueOf())) {
       var dates = dateSetup.dates;
