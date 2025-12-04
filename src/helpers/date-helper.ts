@@ -72,7 +72,7 @@ export const startOfDate = (date: Date, scale: DateHelperScales) => {
 export const ganttDateRange = (
   tasks: Task[],
   viewMode: ViewMode,
-  // preStepsCount: number
+  preStepsCount: number
 ) => {
   let newStartDate: Date = tasks[0].start;
   let newEndDate: Date = tasks[0].start;
@@ -98,7 +98,7 @@ export const ganttDateRange = (
       newEndDate = startOfDate(newEndDate, "year");
       break;
     case ViewMode.Month:
-      //newStartDate = addToDate(newStartDate, -1 * preStepsCount, "month");
+      newStartDate = addToDate(newStartDate, -1 * preStepsCount, "month");
       // newStartDate = addToDate(newStartDate, -1, "month");
       newStartDate = startOfDate(newStartDate, "month");
       // newEndDate = addToDate(newEndDate, 1, "year");

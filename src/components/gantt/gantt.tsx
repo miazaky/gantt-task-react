@@ -32,7 +32,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   rowHeight = 50,
   ganttHeight = 0,
   viewMode = ViewMode.Day,
-  //preStepsCount = 1,
+  preStepsCount = 1,
   locale = "en-GB",
   barFill = 60,
   barCornerRadius = 3,
@@ -69,7 +69,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
   const [dateSetup, setDateSetup] = useState<DateSetup>(() => {
-    const [startDate, endDate] = ganttDateRange(tasks, viewMode/*, preStepsCount*/);
+    const [startDate, endDate] = ganttDateRange(tasks, viewMode, preStepsCount);
     return { viewMode, dates: seedDates(startDate, endDate, viewMode) };
   });
   const [currentViewDate, setCurrentViewDate] = useState<Date | undefined>(
@@ -124,7 +124,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     const [startDate, endDate] = ganttDateRange(
       filteredTasks,
       viewMode,
-      //preStepsCount
+      preStepsCount
     );
     let newDates = seedDates(startDate, endDate, viewMode);
     if (rtl) {
@@ -180,7 +180,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   }, [
     tasks,
     viewMode,
-    //preStepsCount,
+    preStepsCount,
     rowHeight,
     barCornerRadius,
     columnWidth,
