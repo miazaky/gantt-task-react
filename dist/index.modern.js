@@ -2308,6 +2308,7 @@ var HorizontalScroll = function HorizontalScroll(_ref) {
 
 var Gantt = function Gantt(_ref) {
   var tasks = _ref.tasks,
+      rowCountOverride = _ref.rowCountOverride,
       _ref$headerHeight = _ref.headerHeight,
       headerHeight = _ref$headerHeight === void 0 ? 50 : _ref$headerHeight,
       _ref$columnWidth = _ref.columnWidth,
@@ -2515,7 +2516,7 @@ var Gantt = function Gantt(_ref) {
       });
     });
     setBarTasks(groupedBars);
-  }, [tasks, viewMode, preStepsCount, rowHeight, barCornerRadius, columnWidth, taskHeight, handleWidth, barProgressColor, barProgressSelectedColor, barBackgroundColor, barBackgroundSelectedColor, projectProgressColor, projectProgressSelectedColor, projectBackgroundColor, projectBackgroundSelectedColor, milestoneBackgroundColor, milestoneBackgroundSelectedColor, rtl, scrollX, onExpanderClick]);
+  }, [tasks, rowCountOverride, viewMode, preStepsCount, rowHeight, barCornerRadius, columnWidth, taskHeight, handleWidth, barProgressColor, barProgressSelectedColor, barBackgroundColor, barBackgroundSelectedColor, projectProgressColor, projectProgressSelectedColor, projectBackgroundColor, projectBackgroundSelectedColor, milestoneBackgroundColor, milestoneBackgroundSelectedColor, rtl, scrollX, onExpanderClick]);
   useEffect(function () {
     if (viewMode === dateSetup.viewMode && (viewDate && !currentViewDate || viewDate && (currentViewDate === null || currentViewDate === void 0 ? void 0 : currentViewDate.valueOf()) !== viewDate.valueOf())) {
       var dates = dateSetup.dates;
@@ -2584,9 +2585,10 @@ var Gantt = function Gantt(_ref) {
       setSvgContainerHeight(ganttHeight + headerHeight);
     } else {
       var rowCount = getRowCount(barTasks);
-      setSvgContainerHeight(rowCount * rowHeight + headerHeight);
+      var realRowCount = rowCountOverride != null ? rowCountOverride : rowCount;
+      setSvgContainerHeight(realRowCount * rowHeight + headerHeight);
     }
-  }, [ganttHeight, barTasks, headerHeight, rowHeight]);
+  }, [ganttHeight, barTasks, headerHeight, rowHeight, rowCountOverride]);
   useEffect(function () {
     var _wrapperRef$current;
 

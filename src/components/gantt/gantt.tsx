@@ -26,6 +26,7 @@ import styles from "./gantt.module.css";
 
 export const Gantt: React.FunctionComponent<GanttProps> = ({
   tasks,
+  rowCountOverride,
   headerHeight = 50,
   columnWidth = 60,
   listCellWidth = "155px",
@@ -179,6 +180,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     setBarTasks(groupedBars);
   }, [
     tasks,
+    rowCountOverride,
     viewMode,
     preStepsCount,
     rowHeight,
@@ -286,9 +288,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       setSvgContainerHeight(ganttHeight + headerHeight);
     } else {
       const rowCount = getRowCount(barTasks);
-      setSvgContainerHeight(rowCount * rowHeight + headerHeight);
+      const realRowCount = rowCountOverride ?? rowCount;
+      setSvgContainerHeight(realRowCount * rowHeight + headerHeight);
     }
-  }, [ganttHeight, barTasks, headerHeight, rowHeight]);
+  }, [ganttHeight, barTasks, headerHeight, rowHeight, rowCountOverride]);
 
 
   // scroll events
