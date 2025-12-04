@@ -79,9 +79,6 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 
   const [taskListWidth, setTaskListWidth] = useState(0);
   const [svgContainerWidth, setSvgContainerWidth] = useState(0);
-  const [svgContainerHeight, setSvgContainerHeight] = useState(
-    ganttHeight || (tasks.length * rowHeight)
-  );
   const [barTasks, setBarTasks] = useState<BarTask[]>([]);
   const [ganttEvent, setGanttEvent] = useState<GanttEvent>({
     action: "",
@@ -107,7 +104,9 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const [failedTask, setFailedTask] = useState<BarTask | null>(null);
 
   const svgWidth = dateSetup.dates.length * columnWidth;
-
+  const [svgContainerHeight, setSvgContainerHeight] = useState(
+    ganttHeight || (new Array(new Set(barTasks.map(t => t.name.trim().toLowerCase()))).length * rowHeight)
+  );
   const uniqueRowCount = new Array(new Set(barTasks.map(t => t.name.trim().toLowerCase()))).length;
   const rowCount = uniqueRowCount;
   const ganttFullHeight = rowCount * rowHeight;

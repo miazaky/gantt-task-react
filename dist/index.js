@@ -2408,33 +2408,36 @@ var Gantt = function Gantt(_ref) {
       svgContainerWidth = _useState4[0],
       setSvgContainerWidth = _useState4[1];
 
-  var _useState5 = React.useState(ganttHeight || tasks.length * rowHeight),
-      svgContainerHeight = _useState5[0],
-      setSvgContainerHeight = _useState5[1];
+  var _useState5 = React.useState([]),
+      barTasks = _useState5[0],
+      setBarTasks = _useState5[1];
 
-  var _useState6 = React.useState([]),
-      barTasks = _useState6[0],
-      setBarTasks = _useState6[1];
-
-  var _useState7 = React.useState({
+  var _useState6 = React.useState({
     action: ""
   }),
-      ganttEvent = _useState7[0],
-      setGanttEvent = _useState7[1];
+      ganttEvent = _useState6[0],
+      setGanttEvent = _useState6[1];
 
   var taskHeight = React.useMemo(function () {
     return rowHeight * barFill / 100;
   }, [rowHeight, barFill]);
 
-  var _useState8 = React.useState(),
-      selectedTask = _useState8[0],
-      setSelectedTask = _useState8[1];
+  var _useState7 = React.useState(),
+      selectedTask = _useState7[0],
+      setSelectedTask = _useState7[1];
 
-  var _useState9 = React.useState(null),
-      failedTask = _useState9[0],
-      setFailedTask = _useState9[1];
+  var _useState8 = React.useState(null),
+      failedTask = _useState8[0],
+      setFailedTask = _useState8[1];
 
   var svgWidth = dateSetup.dates.length * columnWidth;
+
+  var _useState9 = React.useState(ganttHeight || new Array(new Set(barTasks.map(function (t) {
+    return t.name.trim().toLowerCase();
+  }))).length * rowHeight),
+      svgContainerHeight = _useState9[0],
+      setSvgContainerHeight = _useState9[1];
+
   var uniqueRowCount = new Array(new Set(barTasks.map(function (t) {
     return t.name.trim().toLowerCase();
   }))).length;
