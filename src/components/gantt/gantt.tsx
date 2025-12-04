@@ -107,7 +107,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const [failedTask, setFailedTask] = useState<BarTask | null>(null);
 
   const svgWidth = dateSetup.dates.length * columnWidth;
-  const ganttFullHeight = getRowCount(barTasks) * rowHeight;
+
+  const rowCount = rowCountOverride ?? getRowCount(barTasks);
+  const ganttFullHeight = rowCount * rowHeight;
+
 
   const [scrollY, setScrollY] = useState(0);
   const [scrollX, setScrollX] = useState(-1);
@@ -308,15 +311,15 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         setScrollX(newScrollX);
         event.preventDefault();
       } else {
-          const rowCount = getRowCount(barTasks);
-          const fullHeight = rowCount * rowHeight;
+          const fullHeight = ganttFullHeight;
+          const visibleHeight = ganttHeight || (svgContainerHeight - headerHeight);
 
           let newScrollY = scrollY + event.deltaY;
 
           if (newScrollY < 0) {
             newScrollY = 0;
-          } else if (ganttHeight && newScrollY > fullHeight - ganttHeight) {
-            newScrollY = fullHeight - ganttHeight;
+          } else if (fullHeight > visibleHeight && newScrollY > fullHeight - visibleHeight) {
+            newScrollY = fullHeight - visibleHeight;
           }
 
           if (newScrollY !== scrollY) {
@@ -343,6 +346,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     svgWidth,
     rtl,
     ganttFullHeight,
+    svgContainerHeight,
+    rowCountOverride
   ]);
 
   const handleScrollY = (event: SyntheticEvent<HTMLDivElement>) => {
@@ -399,13 +404,13 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       }
       setScrollX(newScrollX);
     } else {
-        const rowCount = getRowCount(barTasks);
-        const fullHeight = rowCount * rowHeight;
+        const fullHeight = ganttFullHeight;
+        const visibleHeight = ganttHeight || (svgContainerHeight - headerHeight);
 
         if (newScrollY < 0) {
           newScrollY = 0;
-        } else if (ganttHeight && newScrollY > fullHeight - ganttHeight) {
-          newScrollY = fullHeight - ganttHeight;
+        } else if (fullHeight > visibleHeight && newScrollY > fullHeight - visibleHeight) {
+          newScrollY = fullHeight - visibleHeight;
         }
 
         setScrollY(newScrollY);
@@ -534,8 +539,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
           />
         )}
         <VerticalScroll
-          ganttFullHeight={getRowCount(barTasks) * rowHeight}
-          ganttHeight={ganttHeight}
+          ganttFullHeight={ganttFullHeight}
+          ganttHeight={ganttHeight || (svgContainerHeight - headerHeight)}
           headerHeight={headerHeight}
           scroll={scrollY}
           onScroll={handleScrollY}

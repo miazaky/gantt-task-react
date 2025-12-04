@@ -2452,7 +2452,8 @@ var Gantt = function Gantt(_ref) {
       setFailedTask = _useState9[1];
 
   var svgWidth = dateSetup.dates.length * columnWidth;
-  var ganttFullHeight = getRowCount(barTasks) * rowHeight;
+  var rowCount = rowCountOverride != null ? rowCountOverride : getRowCount(barTasks);
+  var ganttFullHeight = rowCount * rowHeight;
 
   var _useState10 = useState(0),
       scrollY = _useState10[0],
@@ -2584,8 +2585,9 @@ var Gantt = function Gantt(_ref) {
     if (ganttHeight) {
       setSvgContainerHeight(ganttHeight + headerHeight);
     } else {
-      var rowCount = getRowCount(barTasks);
-      var realRowCount = rowCountOverride != null ? rowCountOverride : rowCount;
+      var _rowCount = getRowCount(barTasks);
+
+      var realRowCount = rowCountOverride != null ? rowCountOverride : _rowCount;
       setSvgContainerHeight(realRowCount * rowHeight + headerHeight);
     }
   }, [ganttHeight, barTasks, headerHeight, rowHeight, rowCountOverride]);
@@ -2606,14 +2608,14 @@ var Gantt = function Gantt(_ref) {
         setScrollX(newScrollX);
         event.preventDefault();
       } else {
-        var rowCount = getRowCount(barTasks);
-        var fullHeight = rowCount * rowHeight;
+        var fullHeight = ganttFullHeight;
+        var visibleHeight = ganttHeight || svgContainerHeight - headerHeight;
         var newScrollY = scrollY + event.deltaY;
 
         if (newScrollY < 0) {
           newScrollY = 0;
-        } else if (ganttHeight && newScrollY > fullHeight - ganttHeight) {
-          newScrollY = fullHeight - ganttHeight;
+        } else if (fullHeight > visibleHeight && newScrollY > fullHeight - visibleHeight) {
+          newScrollY = fullHeight - visibleHeight;
         }
 
         if (newScrollY !== scrollY) {
@@ -2633,7 +2635,7 @@ var Gantt = function Gantt(_ref) {
 
       (_wrapperRef$current2 = wrapperRef.current) === null || _wrapperRef$current2 === void 0 ? void 0 : _wrapperRef$current2.removeEventListener("wheel", handleWheel);
     };
-  }, [wrapperRef, scrollY, scrollX, ganttHeight, svgWidth, rtl, ganttFullHeight]);
+  }, [wrapperRef, scrollY, scrollX, ganttHeight, svgWidth, rtl, ganttFullHeight, svgContainerHeight, rowCountOverride]);
 
   var handleScrollY = function handleScrollY(event) {
     if (scrollY !== event.currentTarget.scrollTop && !ignoreScrollEvent) {
@@ -2692,13 +2694,13 @@ var Gantt = function Gantt(_ref) {
 
       setScrollX(newScrollX);
     } else {
-      var rowCount = getRowCount(barTasks);
-      var fullHeight = rowCount * rowHeight;
+      var fullHeight = ganttFullHeight;
+      var visibleHeight = ganttHeight || svgContainerHeight - headerHeight;
 
       if (newScrollY < 0) {
         newScrollY = 0;
-      } else if (ganttHeight && newScrollY > fullHeight - ganttHeight) {
-        newScrollY = fullHeight - ganttHeight;
+      } else if (fullHeight > visibleHeight && newScrollY > fullHeight - visibleHeight) {
+        newScrollY = fullHeight - visibleHeight;
       }
 
       setScrollY(newScrollY);
@@ -2825,8 +2827,8 @@ var Gantt = function Gantt(_ref) {
     rtl: rtl,
     svgWidth: svgWidth
   }), React.createElement(VerticalScroll, {
-    ganttFullHeight: getRowCount(barTasks) * rowHeight,
-    ganttHeight: ganttHeight,
+    ganttFullHeight: ganttFullHeight,
+    ganttHeight: ganttHeight || svgContainerHeight - headerHeight,
     headerHeight: headerHeight,
     scroll: scrollY,
     onScroll: handleScrollY,
