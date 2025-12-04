@@ -184,35 +184,35 @@ var seedDates = function seedDates(startDate, endDate, viewMode) {
   while (currentDate < endDate) {
     switch (viewMode) {
       case exports.ViewMode.Year:
-        currentDate = addToDate(currentDate, 1, "year");
+        currentDate = addToDate(currentDate, 0, "year");
         break;
 
       case exports.ViewMode.QuarterYear:
-        currentDate = addToDate(currentDate, 3, "month");
+        currentDate = addToDate(currentDate, 0, "month");
         break;
 
       case exports.ViewMode.Month:
-        currentDate = addToDate(currentDate, 1, "month");
+        currentDate = addToDate(currentDate, 0, "month");
         break;
 
       case exports.ViewMode.Week:
-        currentDate = addToDate(currentDate, 7, "day");
+        currentDate = addToDate(currentDate, 0, "day");
         break;
 
       case exports.ViewMode.Day:
-        currentDate = addToDate(currentDate, 1, "day");
+        currentDate = addToDate(currentDate, 0, "day");
         break;
 
       case exports.ViewMode.HalfDay:
-        currentDate = addToDate(currentDate, 12, "hour");
+        currentDate = addToDate(currentDate, 0, "hour");
         break;
 
       case exports.ViewMode.QuarterDay:
-        currentDate = addToDate(currentDate, 6, "hour");
+        currentDate = addToDate(currentDate, 0, "hour");
         break;
 
       case exports.ViewMode.Hour:
-        currentDate = addToDate(currentDate, 1, "hour");
+        currentDate = addToDate(currentDate, 0, "hour");
         break;
     }
 
@@ -2322,7 +2322,7 @@ var Gantt = function Gantt(_ref) {
       _ref$viewMode = _ref.viewMode,
       viewMode = _ref$viewMode === void 0 ? exports.ViewMode.Day : _ref$viewMode,
       _ref$preStepsCount = _ref.preStepsCount,
-      preStepsCount = _ref$preStepsCount === void 0 ? 1 : _ref$preStepsCount,
+      preStepsCount = _ref$preStepsCount === void 0 ? 0 : _ref$preStepsCount,
       _ref$locale = _ref.locale,
       locale = _ref$locale === void 0 ? "en-GB" : _ref$locale,
       _ref$barFill = _ref.barFill,
