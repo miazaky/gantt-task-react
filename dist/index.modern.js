@@ -2399,8 +2399,6 @@ var Gantt = function Gantt(_ref) {
       currentViewDate = _useState2[0],
       setCurrentViewDate = _useState2[1];
 
-  var svgRef = useRef(null);
-
   var _useState3 = useState(0),
       taskListWidth = _useState3[0],
       setTaskListWidth = _useState3[1];
@@ -2522,13 +2520,6 @@ var Gantt = function Gantt(_ref) {
     setBarTasks(groupedBars);
   }, [tasks, rowCountOverride, viewMode, preStepsCount, rowHeight, barCornerRadius, columnWidth, taskHeight, handleWidth, barProgressColor, barProgressSelectedColor, barBackgroundColor, barBackgroundSelectedColor, projectProgressColor, projectProgressSelectedColor, projectBackgroundColor, projectBackgroundSelectedColor, milestoneBackgroundColor, milestoneBackgroundSelectedColor, rtl, scrollX, onExpanderClick]);
   useEffect(function () {
-    if (svgRef.current) {
-      var height = svgRef.current.clientHeight;
-      console.log("REAL SVG HEIGHT:", height);
-      setSvgContainerHeight(height);
-    }
-  }, [wrapperRef, taskListWidth]);
-  useEffect(function () {
     if (viewMode === dateSetup.viewMode && (viewDate && !currentViewDate || viewDate && (currentViewDate === null || currentViewDate === void 0 ? void 0 : currentViewDate.valueOf()) !== viewDate.valueOf())) {
       var dates = dateSetup.dates;
       var index = dates.findIndex(function (d, i) {
@@ -2592,6 +2583,13 @@ var Gantt = function Gantt(_ref) {
     }
   }, [wrapperRef, taskListWidth]);
   useEffect(function () {
+    if (ganttHeight) {
+      setSvgContainerHeight(ganttHeight + headerHeight);
+    } else {
+      setSvgContainerHeight(rowCount * rowHeight + headerHeight);
+    }
+  }, [ganttHeight, headerHeight, rowHeight, rowCount]);
+  useEffect(function () {
     var _wrapperRef$current;
 
     var handleWheel = function handleWheel(event) {
@@ -2628,16 +2626,6 @@ var Gantt = function Gantt(_ref) {
   }, [wrapperRef, scrollY, scrollX, ganttHeight, svgWidth, rtl, ganttFullHeight, svgContainerHeight, rowCountOverride]);
 
   var handleScrollY = function handleScrollY(event) {
-    console.log("🧪 SCROLL DEBUG", {
-      fullHeight: ganttFullHeight,
-      visibleHeight: ganttHeight || svgContainerHeight - headerHeight,
-      svgContainerHeight: svgContainerHeight,
-      ganttHeightProp: ganttHeight,
-      headerHeight: headerHeight,
-      maxScrollY: Math.max(0, ganttFullHeight - (ganttHeight || svgContainerHeight - headerHeight)),
-      barTasksCount: barTasks.length,
-      rowCount: rowCount
-    });
     var fullHeight = ganttFullHeight;
     var visibleHeight = ganttHeight || svgContainerHeight - headerHeight;
     var maxScrollY = Math.max(0, fullHeight - visibleHeight);
@@ -2807,10 +2795,10 @@ var Gantt = function Gantt(_ref) {
     TaskListTable: TaskListTable
   };
   return React.createElement("div", null, React.createElement("div", {
-    className: styles$9.ganttContainer,
+    className: styles$9.wrapper,
     onKeyDown: handleKeyDown,
     tabIndex: 0,
-    ref: svgRef
+    ref: wrapperRef
   }, listCellWidth && React.createElement(TaskList, Object.assign({}, tableProps)), React.createElement(TaskGantt, {
     gridProps: gridProps,
     calendarProps: calendarProps,

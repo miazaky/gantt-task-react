@@ -77,7 +77,6 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     undefined
   );
 
-  const svgRef = useRef<HTMLDivElement>(null);
   const [taskListWidth, setTaskListWidth] = useState(0);
   const [svgContainerWidth, setSvgContainerWidth] = useState(0);
   const [barTasks, setBarTasks] = useState<BarTask[]>([]);
@@ -219,15 +218,6 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   ]);
 
   useEffect(() => {
-    if (svgRef.current) {
-      const height = svgRef.current.clientHeight;
-      console.log("REAL SVG HEIGHT:", height);
-      setSvgContainerHeight(height);
-    }
-  }, [wrapperRef, taskListWidth]);
-
-
-  useEffect(() => {
     if (
       viewMode === dateSetup.viewMode &&
       ((viewDate && !currentViewDate) ||
@@ -307,22 +297,13 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     }
   }, [wrapperRef, taskListWidth]);
 
-  // useEffect(() => {
-  //   const fullHeight = rowCount * rowHeight + headerHeight;
-
-  //   console.log("📏 HEIGHT DEBUG:", {
-  //     rowCount,
-  //     rowHeight,
-  //     headerHeight,
-  //     computedFullHeight: fullHeight,
-  //     ganttHeightProp: ganttHeight,
-  //   });
-  //   if (ganttHeight) {
-  //     setSvgContainerHeight(ganttHeight + headerHeight);
-  //   } else {
-  //     setSvgContainerHeight(rowCount * rowHeight + headerHeight);
-  //   }
-  // }, [ganttHeight, headerHeight, rowHeight, rowCount]);
+  useEffect(() => {
+    if (ganttHeight) {
+      setSvgContainerHeight(ganttHeight + headerHeight);
+    } else {
+      setSvgContainerHeight(rowCount * rowHeight + headerHeight);
+    }
+  }, [ganttHeight, headerHeight, rowHeight, rowCount]);
 
 
   // scroll events
@@ -371,17 +352,6 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   ]);
 
   const handleScrollY = (event: SyntheticEvent<HTMLDivElement>) => {
-    console.log("🧪 SCROLL DEBUG", {
-      fullHeight: ganttFullHeight,
-      visibleHeight: ganttHeight || (svgContainerHeight - headerHeight),
-      svgContainerHeight,
-      ganttHeightProp: ganttHeight,
-      headerHeight,
-      maxScrollY: Math.max(0, ganttFullHeight - (ganttHeight || (svgContainerHeight - headerHeight))),
-      barTasksCount: barTasks.length,
-      rowCount,
-    });
-
     const fullHeight = ganttFullHeight;
     const visibleHeight = ganttHeight || (svgContainerHeight - headerHeight);
     const maxScrollY = Math.max(0, fullHeight - visibleHeight);
@@ -545,10 +515,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   return (
     <div>
       <div
-        className={styles.ganttContainer}
+        className={styles.wrapper}
         onKeyDown={handleKeyDown}
         tabIndex={0}
-        ref={svgRef}
+        ref={wrapperRef}
       >
         {listCellWidth && <TaskList {...tableProps} />}
         <TaskGantt
