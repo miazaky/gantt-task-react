@@ -103,6 +103,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const [selectedTask, setSelectedTask] = useState<BarTask>();
   const [failedTask, setFailedTask] = useState<BarTask | null>(null);
 
+  
+
   const svgWidth = dateSetup.dates.length * columnWidth;
   const baseRowCount = new Set(
     barTasks.map(t => (t.name).trim().toLowerCase())
@@ -120,6 +122,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   // });
 
   const [svgContainerHeight, setSvgContainerHeight] = useState(ganttHeight);
+  const contentHeight = ganttFullHeight;
+  const containerHeight =
+    ganttHeight ||
+    (wrapperRef.current ? wrapperRef.current.clientHeight : svgContainerHeight - headerHeight);
 
   const [scrollY, setScrollY] = useState(0);
   const [scrollX, setScrollX] = useState(-1);
@@ -311,34 +317,32 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   // scroll events
   useEffect(() => {
     const handleWheel = (event: WheelEvent) => {
-      console.log("🔥 WHEEL EVENT FIRED on wrapper", {
-        deltaY: event.deltaY,
-        scrollY,
-        maxScroll: ganttFullHeight - (ganttHeight || (svgContainerHeight - headerHeight)),
-      });
+      const fullHeight = contentHeight;
+      const visibleHeight = containerHeight - headerHeight;   // viewport minus top header
+      const maxScrollY = Math.max(0, fullHeight - visibleHeight);
+
+      console.log("wheel:", { fullHeight, visibleHeight, maxScrollY, scrollY });
+
       if (event.shiftKey || event.deltaX) {
         const scrollMove = event.deltaX ? event.deltaX : event.deltaY;
         let newScrollX = scrollX + scrollMove;
         newScrollX = Math.max(0, Math.min(newScrollX, svgWidth));
         setScrollX(newScrollX);
-        event.preventDefault();
+        if (svgWidth > visibleHeight) {
+          event.preventDefault(); // prevent page horizontal scroll
+        }
       } else {
-        const fullHeight = ganttFullHeight;
-        const visibleHeight = ganttHeight || (svgContainerHeight - headerHeight);
-        const maxScrollY = Math.max(0, fullHeight - visibleHeight);
-        console.log("wheel:", {
-          fullHeight: ganttFullHeight,
-          visibleHeight: ganttHeight || (svgContainerHeight - headerHeight),
-          maxScrollY,
-          scrollY,
-        });
-
         let newScrollY = scrollY + event.deltaY;
         newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
 
+        // IMPORTANT: as long as we *can* scroll inside the Gantt,
+        // prevent the page from scrolling.
+        if (maxScrollY > 0) {
+          event.preventDefault();
+        }
+
         if (newScrollY !== scrollY) {
           setScrollY(newScrollY);
-          event.preventDefault();
         }
       }
 
@@ -367,18 +371,14 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   ]);
 
   const handleScrollY = (event: SyntheticEvent<HTMLDivElement>) => {
-    const fullHeight = ganttFullHeight;               // total content height
-    const maxVisible = svgContainerHeight;                 // real visible area
-
-    const maxScrollY = Math.max(0, fullHeight - maxVisible);
+    const fullHeight = contentHeight;
+    const visibleHeight = containerHeight - headerHeight;
+    const maxScrollY = Math.max(0, fullHeight - visibleHeight);
 
     let newScrollY = event.currentTarget.scrollTop;
     newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
-    console.log("🔥 VerticalScroll SCROLLBAR moved", {
-      targetScrollTop: event.currentTarget.scrollTop,
-      scrollY,
-    });
 
+    console.log("VerticalScroll:", { fullHeight, visibleHeight, maxScrollY, newScrollY });
 
     if (scrollY !== newScrollY && !ignoreScrollEvent) {
       setScrollY(newScrollY);
@@ -387,7 +387,6 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       setIgnoreScrollEvent(false);
     }
   };
-
 
   const handleScrollX = (event: SyntheticEvent<HTMLDivElement>) => {
     if (scrollX !== event.currentTarget.scrollLeft && !ignoreScrollEvent) {
@@ -576,7 +575,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         )}
         <VerticalScroll
           ganttFullHeight={ganttFullHeight}
-          ganttHeight={ganttHeight || (svgContainerHeight - headerHeight)}
+          ganttHeight={containerHeight - headerHeight}
           headerHeight={headerHeight}
           scroll={scrollY}
           onScroll={handleScrollY}

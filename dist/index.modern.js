@@ -2442,6 +2442,9 @@ var Gantt = function Gantt(_ref) {
       svgContainerHeight = _useState9[0],
       setSvgContainerHeight = _useState9[1];
 
+  var contentHeight = ganttFullHeight;
+  var containerHeight = ganttHeight || (wrapperRef.current ? wrapperRef.current.clientHeight : svgContainerHeight - headerHeight);
+
   var _useState10 = useState(0),
       scrollY = _useState10[0],
       setScrollY = _useState10[1];
@@ -2581,10 +2584,14 @@ var Gantt = function Gantt(_ref) {
     var _wrapperRef$current2, _wrapperRef$current3;
 
     var handleWheel = function handleWheel(event) {
-      console.log("🔥 WHEEL EVENT FIRED on wrapper", {
-        deltaY: event.deltaY,
-        scrollY: scrollY,
-        maxScroll: ganttFullHeight - (ganttHeight || svgContainerHeight - headerHeight)
+      var fullHeight = contentHeight;
+      var visibleHeight = containerHeight - headerHeight;
+      var maxScrollY = Math.max(0, fullHeight - visibleHeight);
+      console.log("wheel:", {
+        fullHeight: fullHeight,
+        visibleHeight: visibleHeight,
+        maxScrollY: maxScrollY,
+        scrollY: scrollY
       });
 
       if (event.shiftKey || event.deltaX) {
@@ -2592,23 +2599,20 @@ var Gantt = function Gantt(_ref) {
         var newScrollX = scrollX + scrollMove;
         newScrollX = Math.max(0, Math.min(newScrollX, svgWidth));
         setScrollX(newScrollX);
-        event.preventDefault();
+
+        if (svgWidth > visibleHeight) {
+          event.preventDefault();
+        }
       } else {
-        var fullHeight = ganttFullHeight;
-        var visibleHeight = ganttHeight || svgContainerHeight - headerHeight;
-        var maxScrollY = Math.max(0, fullHeight - visibleHeight);
-        console.log("wheel:", {
-          fullHeight: ganttFullHeight,
-          visibleHeight: ganttHeight || svgContainerHeight - headerHeight,
-          maxScrollY: maxScrollY,
-          scrollY: scrollY
-        });
         var newScrollY = scrollY + event.deltaY;
         newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
 
+        if (maxScrollY > 0) {
+          event.preventDefault();
+        }
+
         if (newScrollY !== scrollY) {
           setScrollY(newScrollY);
-          event.preventDefault();
         }
       }
 
@@ -2628,14 +2632,16 @@ var Gantt = function Gantt(_ref) {
   }, [wrapperRef, scrollY, scrollX, ganttHeight, svgWidth, rtl, ganttFullHeight, svgContainerHeight, rowCountOverride]);
 
   var handleScrollY = function handleScrollY(event) {
-    var fullHeight = ganttFullHeight;
-    var maxVisible = svgContainerHeight;
-    var maxScrollY = Math.max(0, fullHeight - maxVisible);
+    var fullHeight = contentHeight;
+    var visibleHeight = containerHeight - headerHeight;
+    var maxScrollY = Math.max(0, fullHeight - visibleHeight);
     var newScrollY = event.currentTarget.scrollTop;
     newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
-    console.log("🔥 VerticalScroll SCROLLBAR moved", {
-      targetScrollTop: event.currentTarget.scrollTop,
-      scrollY: scrollY
+    console.log("VerticalScroll:", {
+      fullHeight: fullHeight,
+      visibleHeight: visibleHeight,
+      maxScrollY: maxScrollY,
+      newScrollY: newScrollY
     });
 
     if (scrollY !== newScrollY && !ignoreScrollEvent) {
@@ -2844,7 +2850,7 @@ var Gantt = function Gantt(_ref) {
     svgWidth: svgWidth
   }), React.createElement(VerticalScroll, {
     ganttFullHeight: ganttFullHeight,
-    ganttHeight: ganttHeight || svgContainerHeight - headerHeight,
+    ganttHeight: containerHeight - headerHeight,
     headerHeight: headerHeight,
     scroll: scrollY,
     onScroll: handleScrollY,
