@@ -311,6 +311,11 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   // scroll events
   useEffect(() => {
     const handleWheel = (event: WheelEvent) => {
+      console.log("🔥 WHEEL EVENT FIRED on wrapper", {
+        deltaY: event.deltaY,
+        scrollY,
+        maxScroll: ganttFullHeight - (ganttHeight || (svgContainerHeight - headerHeight)),
+      });
       if (event.shiftKey || event.deltaX) {
         const scrollMove = event.deltaX ? event.deltaX : event.deltaY;
         let newScrollX = scrollX + scrollMove;
@@ -321,10 +326,15 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         const fullHeight = ganttFullHeight;
         const visibleHeight = ganttHeight || (svgContainerHeight - headerHeight);
         const maxScrollY = Math.max(0, fullHeight - visibleHeight);
+        console.log("wheel:", {
+          fullHeight: ganttFullHeight,
+          visibleHeight: ganttHeight || (svgContainerHeight - headerHeight),
+          maxScrollY,
+          scrollY,
+        });
 
         let newScrollY = scrollY + event.deltaY;
         newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
-        console.log("WHEEL SCROLL:", { newScrollY, scrollY, maxScrollY });
 
         if (newScrollY !== scrollY) {
           setScrollY(newScrollY);
@@ -335,6 +345,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       setIgnoreScrollEvent(true);
     };
 
+    console.log("INIT: wrapperRef height =", wrapperRef.current?.clientHeight);
+    console.log("INIT: attaching wheel listener at", Date.now());
     // subscribe if scroll is necessary
     wrapperRef.current?.addEventListener("wheel", handleWheel, {
       passive: false,
@@ -362,7 +374,11 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 
     let newScrollY = event.currentTarget.scrollTop;
     newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
-    console.log("HANDLE SCROLL Y:", { newScrollY, scrollY, maxScrollY });
+    console.log("🔥 VerticalScroll SCROLLBAR moved", {
+      targetScrollTop: event.currentTarget.scrollTop,
+      scrollY,
+    });
+
 
     if (scrollY !== newScrollY && !ignoreScrollEvent) {
       setScrollY(newScrollY);
@@ -527,6 +543,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         tabIndex={0}
         ref={wrapperRef}
       >
+        <div 
+          style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 99999 }}
+          onWheel={() => console.log("💥 wrapper WHEEL overlay fired")}
+        />
         {listCellWidth && <TaskList {...tableProps} />}
         <TaskGantt
           gridProps={gridProps}

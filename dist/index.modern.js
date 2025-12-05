@@ -2578,9 +2578,15 @@ var Gantt = function Gantt(_ref) {
     }
   }, [ganttHeight, headerHeight, rowHeight, rowCount]);
   useEffect(function () {
-    var _wrapperRef$current2;
+    var _wrapperRef$current2, _wrapperRef$current3;
 
     var handleWheel = function handleWheel(event) {
+      console.log("🔥 WHEEL EVENT FIRED on wrapper", {
+        deltaY: event.deltaY,
+        scrollY: scrollY,
+        maxScroll: ganttFullHeight - (ganttHeight || svgContainerHeight - headerHeight)
+      });
+
       if (event.shiftKey || event.deltaX) {
         var scrollMove = event.deltaX ? event.deltaX : event.deltaY;
         var newScrollX = scrollX + scrollMove;
@@ -2591,13 +2597,14 @@ var Gantt = function Gantt(_ref) {
         var fullHeight = ganttFullHeight;
         var visibleHeight = ganttHeight || svgContainerHeight - headerHeight;
         var maxScrollY = Math.max(0, fullHeight - visibleHeight);
+        console.log("wheel:", {
+          fullHeight: ganttFullHeight,
+          visibleHeight: ganttHeight || svgContainerHeight - headerHeight,
+          maxScrollY: maxScrollY,
+          scrollY: scrollY
+        });
         var newScrollY = scrollY + event.deltaY;
         newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
-        console.log("WHEEL SCROLL:", {
-          newScrollY: newScrollY,
-          scrollY: scrollY,
-          maxScrollY: maxScrollY
-        });
 
         if (newScrollY !== scrollY) {
           setScrollY(newScrollY);
@@ -2608,13 +2615,15 @@ var Gantt = function Gantt(_ref) {
       setIgnoreScrollEvent(true);
     };
 
-    (_wrapperRef$current2 = wrapperRef.current) === null || _wrapperRef$current2 === void 0 ? void 0 : _wrapperRef$current2.addEventListener("wheel", handleWheel, {
+    console.log("INIT: wrapperRef height =", (_wrapperRef$current2 = wrapperRef.current) === null || _wrapperRef$current2 === void 0 ? void 0 : _wrapperRef$current2.clientHeight);
+    console.log("INIT: attaching wheel listener at", Date.now());
+    (_wrapperRef$current3 = wrapperRef.current) === null || _wrapperRef$current3 === void 0 ? void 0 : _wrapperRef$current3.addEventListener("wheel", handleWheel, {
       passive: false
     });
     return function () {
-      var _wrapperRef$current3;
+      var _wrapperRef$current4;
 
-      (_wrapperRef$current3 = wrapperRef.current) === null || _wrapperRef$current3 === void 0 ? void 0 : _wrapperRef$current3.removeEventListener("wheel", handleWheel);
+      (_wrapperRef$current4 = wrapperRef.current) === null || _wrapperRef$current4 === void 0 ? void 0 : _wrapperRef$current4.removeEventListener("wheel", handleWheel);
     };
   }, [wrapperRef, scrollY, scrollX, ganttHeight, svgWidth, rtl, ganttFullHeight, svgContainerHeight, rowCountOverride]);
 
@@ -2624,10 +2633,9 @@ var Gantt = function Gantt(_ref) {
     var maxScrollY = Math.max(0, fullHeight - maxVisible);
     var newScrollY = event.currentTarget.scrollTop;
     newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
-    console.log("HANDLE SCROLL Y:", {
-      newScrollY: newScrollY,
-      scrollY: scrollY,
-      maxScrollY: maxScrollY
+    console.log("🔥 VerticalScroll SCROLLBAR moved", {
+      targetScrollTop: event.currentTarget.scrollTop,
+      scrollY: scrollY
     });
 
     if (scrollY !== newScrollY && !ignoreScrollEvent) {
@@ -2802,7 +2810,17 @@ var Gantt = function Gantt(_ref) {
     onKeyDown: handleKeyDown,
     tabIndex: 0,
     ref: wrapperRef
-  }, listCellWidth && React.createElement(TaskList, Object.assign({}, tableProps)), React.createElement(TaskGantt, {
+  }, React.createElement("div", {
+    style: {
+      position: "absolute",
+      inset: 0,
+      pointerEvents: "none",
+      zIndex: 99999
+    },
+    onWheel: function onWheel() {
+      return console.log("💥 wrapper WHEEL overlay fired");
+    }
+  }), listCellWidth && React.createElement(TaskList, Object.assign({}, tableProps)), React.createElement(TaskGantt, {
     gridProps: gridProps,
     calendarProps: calendarProps,
     barProps: barProps,
