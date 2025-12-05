@@ -2512,6 +2512,12 @@ var Gantt = function Gantt(_ref) {
       }
 
       var newY = rowIndex * rowHeight + (rowHeight - taskHeight) / 2;
+      console.log("BAR POSITION:", {
+        barName: bar.name,
+        rowKey: rowKey,
+        rowIndex: rowIndex,
+        newY: newY
+      });
       return _extends({}, bar, {
         index: rowIndex,
         y: newY

@@ -181,6 +181,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       }
 
       const newY = rowIndex * rowHeight + (rowHeight - taskHeight) / 2;
+      console.log("BAR POSITION:", { barName: bar.name, rowKey, rowIndex, newY });
 
       return {
         ...bar,
