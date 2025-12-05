@@ -315,70 +315,126 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 
 
   // scroll events
+  // useEffect(() => {
+  //   const handleWheel = (event: WheelEvent) => {
+  //     const fullHeight = contentHeight;
+  //     const visibleHeight = containerHeight - headerHeight;   // viewport minus top header
+  //     const maxScrollY = Math.max(0, fullHeight - visibleHeight);
+
+  //     console.log("wheel:", { fullHeight, visibleHeight, maxScrollY, scrollY });
+
+  //     if (event.shiftKey || event.deltaX) {
+  //       const scrollMove = event.deltaX ? event.deltaX : event.deltaY;
+  //       let newScrollX = scrollX + scrollMove;
+  //       newScrollX = Math.max(0, Math.min(newScrollX, svgWidth));
+  //       setScrollX(newScrollX);
+  //       if (svgWidth > visibleHeight) {
+  //         event.preventDefault(); // prevent page horizontal scroll
+  //       }
+  //     } else {
+  //       let newScrollY = scrollY + event.deltaY;
+  //       newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
+
+  //       // IMPORTANT: as long as we *can* scroll inside the Gantt,
+  //       // prevent the page from scrolling.
+  //       if (maxScrollY > 0) {
+  //         event.preventDefault();
+  //       }
+
+  //       if (newScrollY !== scrollY) {
+  //         setScrollY(newScrollY);
+  //       }
+  //     }
+
+  //     setIgnoreScrollEvent(true);
+  //   };
+
+  //   console.log("INIT: wrapperRef height =", wrapperRef.current?.clientHeight);
+  //   console.log("INIT: attaching wheel listener at", Date.now());
+  //   // subscribe if scroll is necessary
+  //   wrapperRef.current?.addEventListener("wheel", handleWheel, {
+  //     passive: false,
+  //   });
+  //   return () => {
+  //     wrapperRef.current?.removeEventListener("wheel", handleWheel);
+  //   };
+  // }, [
+  //   wrapperRef,
+  //   scrollY,
+  //   scrollX,
+  //   ganttHeight,
+  //   svgWidth,
+  //   rtl,
+  //   ganttFullHeight,
+  //   svgContainerHeight,
+  //   rowCountOverride
+  // ]);
   useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
     const handleWheel = (event: WheelEvent) => {
-      const fullHeight = contentHeight;
-      const visibleHeight = containerHeight - headerHeight;   // viewport minus top header
+      // only react if the wheel is inside the gantt wrapper
+      if (!wrapperRef.current || !wrapperRef.current.contains(event.target as Node)) {
+        return;
+      }
+
+      const fullHeight = contentHeight; // = ganttFullHeight
+      const visibleHeight = (ganttHeight || wrapperRef.current.clientHeight) - headerHeight;
       const maxScrollY = Math.max(0, fullHeight - visibleHeight);
 
-      console.log("wheel:", { fullHeight, visibleHeight, maxScrollY, scrollY });
-
-      if (event.shiftKey || event.deltaX) {
-        const scrollMove = event.deltaX ? event.deltaX : event.deltaY;
-        let newScrollX = scrollX + scrollMove;
-        newScrollX = Math.max(0, Math.min(newScrollX, svgWidth));
-        setScrollX(newScrollX);
-        if (svgWidth > visibleHeight) {
-          event.preventDefault(); // prevent page horizontal scroll
-        }
+      // horizontal scroll (Shift or strong horizontal movement)
+      if (event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+        const scrollMove = event.deltaX || event.deltaY;
+        setScrollX(prev =>
+          Math.max(0, Math.min(prev + scrollMove, svgWidth))
+        );
       } else {
-        let newScrollY = scrollY + event.deltaY;
-        newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
-
-        // IMPORTANT: as long as we *can* scroll inside the Gantt,
-        // prevent the page from scrolling.
+        // vertical scroll
         if (maxScrollY > 0) {
-          event.preventDefault();
-        }
-
-        if (newScrollY !== scrollY) {
-          setScrollY(newScrollY);
+          setScrollY(prev => {
+            const next = Math.max(0, Math.min(prev + event.deltaY, maxScrollY));
+            return next;
+          });
         }
       }
 
+      // always stop native scrolling; page can't scroll anyway, but this
+      // keeps touchpad inertia from doing weird things
+      event.preventDefault();
       setIgnoreScrollEvent(true);
     };
 
-    console.log("INIT: wrapperRef height =", wrapperRef.current?.clientHeight);
-    console.log("INIT: attaching wheel listener at", Date.now());
-    // subscribe if scroll is necessary
-    wrapperRef.current?.addEventListener("wheel", handleWheel, {
-      passive: false,
-    });
-    return () => {
-      wrapperRef.current?.removeEventListener("wheel", handleWheel);
-    };
-  }, [
-    wrapperRef,
-    scrollY,
-    scrollX,
-    ganttHeight,
-    svgWidth,
-    rtl,
-    ganttFullHeight,
-    svgContainerHeight,
-    rowCountOverride
-  ]);
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [ganttHeight, contentHeight, svgWidth, headerHeight]);
 
+
+  // const handleScrollY = (event: SyntheticEvent<HTMLDivElement>) => {
+  //   const fullHeight = contentHeight;
+  //   const visibleHeight = containerHeight - headerHeight;
+  //   const maxScrollY = Math.max(0, fullHeight - visibleHeight);
+
+  //   let newScrollY = event.currentTarget.scrollTop;
+  //   newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
+
+  //   console.log("VerticalScroll:", { fullHeight, visibleHeight, maxScrollY, newScrollY });
+
+  //   if (scrollY !== newScrollY && !ignoreScrollEvent) {
+  //     setScrollY(newScrollY);
+  //     setIgnoreScrollEvent(true);
+  //   } else {
+  //     setIgnoreScrollEvent(false);
+  //   }
+  // };
   const handleScrollY = (event: SyntheticEvent<HTMLDivElement>) => {
+    const wrapper = wrapperRef.current;
     const fullHeight = contentHeight;
-    const visibleHeight = containerHeight - headerHeight;
+    const visibleHeight = (ganttHeight || (wrapper ? wrapper.clientHeight : 0)) - headerHeight;
     const maxScrollY = Math.max(0, fullHeight - visibleHeight);
 
     let newScrollY = event.currentTarget.scrollTop;
     newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
-
-    console.log("VerticalScroll:", { fullHeight, visibleHeight, maxScrollY, newScrollY });
 
     if (scrollY !== newScrollY && !ignoreScrollEvent) {
       setScrollY(newScrollY);
@@ -387,6 +443,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       setIgnoreScrollEvent(false);
     }
   };
+
 
   const handleScrollX = (event: SyntheticEvent<HTMLDivElement>) => {
     if (scrollX !== event.currentTarget.scrollLeft && !ignoreScrollEvent) {

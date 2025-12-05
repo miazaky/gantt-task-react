@@ -2581,68 +2581,51 @@ var Gantt = function Gantt(_ref) {
     }
   }, [ganttHeight, headerHeight, rowHeight, rowCount]);
   useEffect(function () {
-    var _wrapperRef$current2, _wrapperRef$current3;
+    var el = wrapperRef.current;
+    if (!el) return;
 
     var handleWheel = function handleWheel(event) {
+      if (!wrapperRef.current || !wrapperRef.current.contains(event.target)) {
+        return;
+      }
+
       var fullHeight = contentHeight;
-      var visibleHeight = containerHeight - headerHeight;
+      var visibleHeight = (ganttHeight || wrapperRef.current.clientHeight) - headerHeight;
       var maxScrollY = Math.max(0, fullHeight - visibleHeight);
-      console.log("wheel:", {
-        fullHeight: fullHeight,
-        visibleHeight: visibleHeight,
-        maxScrollY: maxScrollY,
-        scrollY: scrollY
-      });
 
-      if (event.shiftKey || event.deltaX) {
-        var scrollMove = event.deltaX ? event.deltaX : event.deltaY;
-        var newScrollX = scrollX + scrollMove;
-        newScrollX = Math.max(0, Math.min(newScrollX, svgWidth));
-        setScrollX(newScrollX);
-
-        if (svgWidth > visibleHeight) {
-          event.preventDefault();
-        }
+      if (event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+        var scrollMove = event.deltaX || event.deltaY;
+        setScrollX(function (prev) {
+          return Math.max(0, Math.min(prev + scrollMove, svgWidth));
+        });
       } else {
-        var newScrollY = scrollY + event.deltaY;
-        newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
-
         if (maxScrollY > 0) {
-          event.preventDefault();
-        }
-
-        if (newScrollY !== scrollY) {
-          setScrollY(newScrollY);
+          setScrollY(function (prev) {
+            var next = Math.max(0, Math.min(prev + event.deltaY, maxScrollY));
+            return next;
+          });
         }
       }
 
+      event.preventDefault();
       setIgnoreScrollEvent(true);
     };
 
-    console.log("INIT: wrapperRef height =", (_wrapperRef$current2 = wrapperRef.current) === null || _wrapperRef$current2 === void 0 ? void 0 : _wrapperRef$current2.clientHeight);
-    console.log("INIT: attaching wheel listener at", Date.now());
-    (_wrapperRef$current3 = wrapperRef.current) === null || _wrapperRef$current3 === void 0 ? void 0 : _wrapperRef$current3.addEventListener("wheel", handleWheel, {
+    el.addEventListener("wheel", handleWheel, {
       passive: false
     });
     return function () {
-      var _wrapperRef$current4;
-
-      (_wrapperRef$current4 = wrapperRef.current) === null || _wrapperRef$current4 === void 0 ? void 0 : _wrapperRef$current4.removeEventListener("wheel", handleWheel);
+      return el.removeEventListener("wheel", handleWheel);
     };
-  }, [wrapperRef, scrollY, scrollX, ganttHeight, svgWidth, rtl, ganttFullHeight, svgContainerHeight, rowCountOverride]);
+  }, [ganttHeight, contentHeight, svgWidth, headerHeight]);
 
   var handleScrollY = function handleScrollY(event) {
+    var wrapper = wrapperRef.current;
     var fullHeight = contentHeight;
-    var visibleHeight = containerHeight - headerHeight;
+    var visibleHeight = (ganttHeight || (wrapper ? wrapper.clientHeight : 0)) - headerHeight;
     var maxScrollY = Math.max(0, fullHeight - visibleHeight);
     var newScrollY = event.currentTarget.scrollTop;
     newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
-    console.log("VerticalScroll:", {
-      fullHeight: fullHeight,
-      visibleHeight: visibleHeight,
-      maxScrollY: maxScrollY,
-      newScrollY: newScrollY
-    });
 
     if (scrollY !== newScrollY && !ignoreScrollEvent) {
       setScrollY(newScrollY);
