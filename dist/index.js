@@ -2432,28 +2432,12 @@ var Gantt = function Gantt(_ref) {
 
   var svgWidth = dateSetup.dates.length * columnWidth;
   var baseRowCount = new Set(barTasks.map(function (t) {
-    var _t$name;
-
-    return ((_t$name = t.name) != null ? _t$name : "").trim().toLowerCase();
+    return t.name.trim().toLowerCase();
   })).size;
   var rowCount = rowCountOverride != null ? rowCountOverride : baseRowCount;
-  var ganttFullHeight = rowCount * rowHeight + headerHeight;
-  console.log("🔎 GANTT ROW DEBUG", {
-    barTasksCount: barTasks.length,
-    names: barTasks.map(function (t) {
-      return t.name;
-    }),
-    normalizedNames: barTasks.map(function (t) {
-      var _t$name2;
+  var ganttFullHeight = rowCount * rowHeight;
 
-      return ((_t$name2 = t.name) != null ? _t$name2 : "").trim().toLowerCase();
-    }),
-    baseRowCount: baseRowCount,
-    rowCount: rowCount,
-    ganttFullHeight: ganttFullHeight
-  });
-
-  var _useState9 = React.useState(0),
+  var _useState9 = React.useState(ganttHeight),
       svgContainerHeight = _useState9[0],
       setSvgContainerHeight = _useState9[1];
 
@@ -2527,21 +2511,6 @@ var Gantt = function Gantt(_ref) {
     setBarTasks(groupedBars);
   }, [tasks, rowCountOverride, viewMode, preStepsCount, rowHeight, barCornerRadius, columnWidth, taskHeight, handleWidth, barProgressColor, barProgressSelectedColor, barBackgroundColor, barBackgroundSelectedColor, projectProgressColor, projectProgressSelectedColor, projectBackgroundColor, projectBackgroundSelectedColor, milestoneBackgroundColor, milestoneBackgroundSelectedColor, rtl, scrollX, onExpanderClick]);
   React.useEffect(function () {
-    var updateHeight = function updateHeight() {
-      if (wrapperRef.current) {
-        var h = wrapperRef.current.clientHeight;
-        setSvgContainerHeight(h);
-        console.log("REAL VISIBLE HEIGHT:", h);
-      }
-    };
-
-    updateHeight();
-    window.addEventListener("resize", updateHeight);
-    return function () {
-      return window.removeEventListener("resize", updateHeight);
-    };
-  }, []);
-  React.useEffect(function () {
     if (viewMode === dateSetup.viewMode && (viewDate && !currentViewDate || viewDate && (currentViewDate === null || currentViewDate === void 0 ? void 0 : currentViewDate.valueOf()) !== viewDate.valueOf())) {
       var dates = dateSetup.dates;
       var index = dates.findIndex(function (d, i) {
@@ -2609,6 +2578,7 @@ var Gantt = function Gantt(_ref) {
       setSvgContainerHeight(ganttHeight + headerHeight);
     } else {
       setSvgContainerHeight(rowCount * rowHeight + headerHeight);
+      console.log("SETTING CONTAINER HEIGHT:", rowCount * rowHeight + headerHeight);
     }
   }, [ganttHeight, headerHeight, rowHeight, rowCount]);
   React.useEffect(function () {
@@ -2627,6 +2597,11 @@ var Gantt = function Gantt(_ref) {
         var maxScrollY = Math.max(0, fullHeight - visibleHeight);
         var newScrollY = scrollY + event.deltaY;
         newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
+        console.log("WHEEL SCROLL:", {
+          newScrollY: newScrollY,
+          scrollY: scrollY,
+          maxScrollY: maxScrollY
+        });
 
         if (newScrollY !== scrollY) {
           setScrollY(newScrollY);
@@ -2653,6 +2628,11 @@ var Gantt = function Gantt(_ref) {
     var maxScrollY = Math.max(0, fullHeight - maxVisible);
     var newScrollY = event.currentTarget.scrollTop;
     newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
+    console.log("HANDLE SCROLL Y:", {
+      newScrollY: newScrollY,
+      scrollY: scrollY,
+      maxScrollY: maxScrollY
+    });
 
     if (scrollY !== newScrollY && !ignoreScrollEvent) {
       setScrollY(newScrollY);
@@ -2713,6 +2693,11 @@ var Gantt = function Gantt(_ref) {
       var fullHeight = ganttFullHeight;
       var visibleHeight = ganttHeight || svgContainerHeight - headerHeight;
       var maxScrollY = Math.max(0, fullHeight - visibleHeight);
+      console.log("KEYDOWN SCROLL:", {
+        newScrollY: newScrollY,
+        scrollY: scrollY,
+        maxScrollY: maxScrollY
+      });
 
       if (newScrollY < 0) {
         newScrollY = 0;

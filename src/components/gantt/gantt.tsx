@@ -105,21 +105,21 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 
   const svgWidth = dateSetup.dates.length * columnWidth;
   const baseRowCount = new Set(
-    barTasks.map(t => (t.name ?? "").trim().toLowerCase())
+    barTasks.map(t => (t.name).trim().toLowerCase())
   ).size;
 
   const rowCount = rowCountOverride ?? baseRowCount;
-  const ganttFullHeight = rowCount * rowHeight + headerHeight;
-  console.log("🔎 GANTT ROW DEBUG", {
-    barTasksCount: barTasks.length,
-    names: barTasks.map(t => t.name),
-    normalizedNames: barTasks.map(t => (t.name ?? "").trim().toLowerCase()),
-    baseRowCount,
-    rowCount,
-    ganttFullHeight,
-  });
-  const [svgContainerHeight, setSvgContainerHeight] = useState(0);
+  const ganttFullHeight = rowCount * rowHeight;
+  // console.log("🔎 GANTT ROW DEBUG", {
+  //   barTasksCount: barTasks.length,
+  //   names: barTasks.map(t => t.name),
+  //   normalizedNames: barTasks.map(t => (t.name ?? "").trim().toLowerCase()),
+  //   baseRowCount,
+  //   rowCount,
+  //   ganttFullHeight,
+  // });
 
+  const [svgContainerHeight, setSvgContainerHeight] = useState(ganttHeight);
 
   const [scrollY, setScrollY] = useState(0);
   const [scrollX, setScrollX] = useState(-1);
@@ -217,20 +217,6 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   ]);
 
   useEffect(() => {
-    const updateHeight = () => {
-      if (wrapperRef.current) {
-        const h = wrapperRef.current.clientHeight;
-        setSvgContainerHeight(h);
-        console.log("REAL VISIBLE HEIGHT:", h);
-      }
-    };
-
-    updateHeight();
-    window.addEventListener("resize", updateHeight);
-    return () => window.removeEventListener("resize", updateHeight);
-  }, []);
-
-  useEffect(() => {
     if (
       viewMode === dateSetup.viewMode &&
       ((viewDate && !currentViewDate) ||
@@ -315,6 +301,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       setSvgContainerHeight(ganttHeight + headerHeight);
     } else {
       setSvgContainerHeight(rowCount * rowHeight + headerHeight);
+      console.log("SETTING CONTAINER HEIGHT:", rowCount * rowHeight + headerHeight);
     }
   }, [ganttHeight, headerHeight, rowHeight, rowCount]);
 
@@ -335,6 +322,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 
         let newScrollY = scrollY + event.deltaY;
         newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
+        console.log("WHEEL SCROLL:", { newScrollY, scrollY, maxScrollY });
 
         if (newScrollY !== scrollY) {
           setScrollY(newScrollY);
@@ -372,6 +360,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 
     let newScrollY = event.currentTarget.scrollTop;
     newScrollY = Math.max(0, Math.min(newScrollY, maxScrollY));
+    console.log("HANDLE SCROLL Y:", { newScrollY, scrollY, maxScrollY });
 
     if (scrollY !== newScrollY && !ignoreScrollEvent) {
       setScrollY(newScrollY);
@@ -430,6 +419,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         const fullHeight = ganttFullHeight;
         const visibleHeight = ganttHeight || (svgContainerHeight - headerHeight);
         const maxScrollY = Math.max(0, fullHeight - visibleHeight);
+        console.log("KEYDOWN SCROLL:", { newScrollY, scrollY, maxScrollY });
 
         if (newScrollY < 0) {
           newScrollY = 0;
